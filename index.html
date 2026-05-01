@@ -2,9 +2,387 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>My First Page</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ポモドーロタイマー</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #1a1a2e;
+      color: #eee;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    h1 {
+      font-size: 1.4rem;
+      font-weight: 400;
+      letter-spacing: 0.2em;
+      margin-bottom: 2rem;
+      opacity: 0.7;
+      text-transform: uppercase;
+    }
+
+    .mode-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .mode-tab {
+      padding: 0.4rem 1rem;
+      border-radius: 20px;
+      border: none;
+      background: transparent;
+      color: #aaa;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .mode-tab.active {
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+    }
+
+    .timer-card {
+      background: rgba(255,255,255,0.05);
+      border-radius: 20px;
+      padding: 3rem 4rem;
+      text-align: center;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.08);
+      min-width: 320px;
+    }
+
+    .progress-ring {
+      position: relative;
+      width: 200px;
+      height: 200px;
+      margin: 0 auto 2rem;
+    }
+
+    .progress-ring svg {
+      transform: rotate(-90deg);
+    }
+
+    .progress-ring circle.bg {
+      fill: none;
+      stroke: rgba(255,255,255,0.08);
+      stroke-width: 8;
+    }
+
+    .progress-ring circle.fg {
+      fill: none;
+      stroke: #e55b5b;
+      stroke-width: 8;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 0.5s ease, stroke 0.3s;
+    }
+
+    .time-display {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 3.2rem;
+      font-weight: 300;
+      letter-spacing: 0.05em;
+    }
+
+    .controls {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .btn {
+      padding: 0.7rem 2rem;
+      border-radius: 25px;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: #e55b5b;
+      color: #fff;
+      min-width: 120px;
+    }
+
+    .btn-primary:hover {
+      background: #f07070;
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255,255,255,0.18);
+    }
+
+    .session-count {
+      font-size: 0.85rem;
+      opacity: 0.5;
+      margin-bottom: 0.5rem;
+    }
+
+    .tomatoes {
+      display: flex;
+      gap: 0.4rem;
+      justify-content: center;
+    }
+
+    .tomato {
+      font-size: 1.1rem;
+      opacity: 0.25;
+      transition: opacity 0.3s;
+    }
+
+    .tomato.done {
+      opacity: 1;
+    }
+
+    .settings {
+      margin-top: 2rem;
+      display: flex;
+      gap: 1.5rem;
+      justify-content: center;
+    }
+
+    .setting-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.75rem;
+      opacity: 0.6;
+    }
+
+    .setting-item label {
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .setting-item input {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 6px;
+      color: #fff;
+      padding: 0.2rem 0.4rem;
+      width: 50px;
+      text-align: center;
+      font-size: 0.85rem;
+    }
+
+    /* mode colors */
+    body.break .progress-ring circle.fg { stroke: #5bc4e5; }
+    body.break .btn-primary { background: #5bc4e5; }
+    body.break .btn-primary:hover { background: #7dd6ef; }
+
+    body.longbreak .progress-ring circle.fg { stroke: #7c5be5; }
+    body.longbreak .btn-primary { background: #7c5be5; }
+    body.longbreak .btn-primary:hover { background: #9b7ef0; }
+  </style>
 </head>
 <body>
-  <p>Hello World!</p>
+  <h1>ポモドーロタイマー</h1>
+
+  <div class="mode-tabs">
+    <button class="mode-tab active" data-mode="pomodoro">ポモドーロ</button>
+    <button class="mode-tab" data-mode="break">短い休憩</button>
+    <button class="mode-tab" data-mode="longbreak">長い休憩</button>
+  </div>
+
+  <div class="timer-card">
+    <div class="progress-ring">
+      <svg width="200" height="200" viewBox="0 0 200 200">
+        <circle class="bg" cx="100" cy="100" r="88"/>
+        <circle class="fg" id="progressCircle" cx="100" cy="100" r="88"/>
+      </svg>
+      <div class="time-display" id="timeDisplay">25:00</div>
+    </div>
+
+    <div class="controls">
+      <button class="btn btn-primary" id="startBtn">スタート</button>
+      <button class="btn btn-secondary" id="resetBtn">リセット</button>
+    </div>
+
+    <div class="session-count">セッション数</div>
+    <div class="tomatoes" id="tomatoes"></div>
+  </div>
+
+  <div class="settings">
+    <div class="setting-item">
+      <label>集中</label>
+      <input type="number" id="pomodoroMin" value="25" min="1" max="60">
+    </div>
+    <div class="setting-item">
+      <label>短い休憩</label>
+      <input type="number" id="breakMin" value="5" min="1" max="30">
+    </div>
+    <div class="setting-item">
+      <label>長い休憩</label>
+      <input type="number" id="longBreakMin" value="15" min="1" max="60">
+    </div>
+  </div>
+
+  <script>
+    const CIRCUMFERENCE = 2 * Math.PI * 88;
+
+    const modes = {
+      pomodoro: () => parseInt(document.getElementById('pomodoroMin').value) * 60,
+      break:    () => parseInt(document.getElementById('breakMin').value) * 60,
+      longbreak:() => parseInt(document.getElementById('longBreakMin').value) * 60,
+    };
+
+    let currentMode = 'pomodoro';
+    let totalSeconds = modes.pomodoro();
+    let remaining = totalSeconds;
+    let running = false;
+    let interval = null;
+    let sessions = 0;
+
+    const timeDisplay = document.getElementById('timeDisplay');
+    const startBtn    = document.getElementById('startBtn');
+    const resetBtn    = document.getElementById('resetBtn');
+    const circle      = document.getElementById('progressCircle');
+    const tomatoesEl  = document.getElementById('tomatoes');
+
+    circle.style.strokeDasharray  = CIRCUMFERENCE;
+    circle.style.strokeDashoffset = 0;
+
+    function format(sec) {
+      const m = String(Math.floor(sec / 60)).padStart(2, '0');
+      const s = String(sec % 60).padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
+    function updateDisplay() {
+      timeDisplay.textContent = format(remaining);
+      document.title = `${format(remaining)} — ポモドーロ`;
+      const progress = 1 - remaining / totalSeconds;
+      circle.style.strokeDashoffset = CIRCUMFERENCE * (1 - progress);
+    }
+
+    function renderTomatoes() {
+      tomatoesEl.innerHTML = '';
+      for (let i = 0; i < 4; i++) {
+        const t = document.createElement('span');
+        t.className = 'tomato' + (i < sessions % 4 || (sessions > 0 && sessions % 4 === 0) ? ' done' : '');
+        t.textContent = '🍅';
+        tomatoesEl.appendChild(t);
+      }
+      if (sessions > 0 && sessions % 4 === 0) {
+        tomatoesEl.querySelectorAll('.tomato').forEach(t => t.classList.add('done'));
+      }
+    }
+
+    function playBeep() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        [0, 0.3, 0.6].forEach(delay => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.frequency.value = 880;
+          gain.gain.setValueAtTime(0.3, ctx.currentTime + delay);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.2);
+          osc.start(ctx.currentTime + delay);
+          osc.stop(ctx.currentTime + delay + 0.25);
+        });
+      } catch {}
+    }
+
+    function tick() {
+      if (remaining <= 0) {
+        clearInterval(interval);
+        running = false;
+        startBtn.textContent = 'スタート';
+        playBeep();
+        if (currentMode === 'pomodoro') {
+          sessions++;
+          renderTomatoes();
+        }
+        return;
+      }
+      remaining--;
+      updateDisplay();
+    }
+
+    function setMode(mode) {
+      clearInterval(interval);
+      running = false;
+      startBtn.textContent = 'スタート';
+      currentMode = mode;
+      totalSeconds = modes[mode]();
+      remaining = totalSeconds;
+
+      document.body.className = mode === 'pomodoro' ? '' : mode;
+
+      document.querySelectorAll('.mode-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === mode);
+      });
+
+      updateDisplay();
+    }
+
+    startBtn.addEventListener('click', () => {
+      if (running) {
+        clearInterval(interval);
+        running = false;
+        startBtn.textContent = 'スタート';
+      } else {
+        if (remaining === 0) {
+          remaining = totalSeconds;
+          updateDisplay();
+        }
+        interval = setInterval(tick, 1000);
+        running = true;
+        startBtn.textContent = '一時停止';
+      }
+    });
+
+    resetBtn.addEventListener('click', () => {
+      clearInterval(interval);
+      running = false;
+      startBtn.textContent = 'スタート';
+      totalSeconds = modes[currentMode]();
+      remaining = totalSeconds;
+      updateDisplay();
+    });
+
+    document.querySelectorAll('.mode-tab').forEach(btn => {
+      btn.addEventListener('click', () => setMode(btn.dataset.mode));
+    });
+
+    ['pomodoroMin', 'breakMin', 'longBreakMin'].forEach(id => {
+      document.getElementById(id).addEventListener('change', () => {
+        if (!running) {
+          totalSeconds = modes[currentMode]();
+          remaining = totalSeconds;
+          updateDisplay();
+        }
+      });
+    });
+
+    renderTomatoes();
+    updateDisplay();
+  </script>
 </body>
 </html>
